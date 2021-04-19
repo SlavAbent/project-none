@@ -1,6 +1,5 @@
 const testModule = () => {
-    console.log('test module');
-    alert('Hi')
+    console.log('hello module');
 }
 
 export default testModule;

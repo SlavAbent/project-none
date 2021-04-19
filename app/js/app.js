@@ -1,1 +1,2 @@
-console.log('Test app');
+'use strict';
+console.log('Hello js');

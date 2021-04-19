@@ -10,7 +10,7 @@ const cleancss = require('gulp-clean-css');
 const imagemin = require('gulp-imagemin');
 const newer = require('gulp-newer');
 const del = require('del');
-
+const ts = require('gulp-typescript');
 
 function browsersync() {
 	browserSync.init({ 
@@ -25,7 +25,6 @@ function scripts() {
 		// 'node_modules/jquery/dist/jquery.min.js', 
 		'app/js/app.js',
 		'app/js/main.js',
-		
 	])
 	.pipe(concat('app.min.js')) 
 	.pipe(uglify()) 
@@ -33,10 +32,23 @@ function scripts() {
 	.pipe(browserSync.stream())
 }
 
-function styles() {
-	
-	return src('app/' + preprocessor + '/*.' + preprocessor + '')
+function typescript(){
+	return src([
+		'app/ts/typescript/**/*.ts',
+	])
+        .pipe(ts({
+            noImplicitAny: true,
+            outFile: 'types.js'
+        }))
+		.pipe(concat('./min/types.min.js')) 
+		.pipe(uglify()) 
+        .pipe(dest('app/ts'));
+}
 
+
+
+function styles() {
+	return src('app/' + preprocessor + '/*.' + preprocessor + '')
 	.pipe(eval(preprocessor)())
 	.pipe(concat('app.min.css'))
 	.pipe(autoprefixer({ overrideBrowserslist: ['last 10 versions'], grid: true }))
@@ -60,6 +72,7 @@ function buildcopy() {
 	return src([
 		'app/css/**/*.min.css',
 		'app/js/**/*.min.js',
+		'app/ts/**/*.min.js',
 		'app/images/dest/**/*',
 		'app/**/*.html',
 		], { base: 'app' })
@@ -73,6 +86,7 @@ function cleandist() {
 function startwatch() {
 
 	watch(['app/**/*.js', '!app/**/*.min.js'], scripts);
+	watch(['app/**/*.ts', '!app/**/*.min.ts'], typescript);
 	watch('app/**/' + preprocessor + '/**/*', styles);
 	watch('app/**/*.html').on('change', browserSync.reload);
 	watch('app/images/src/**/*', images);
@@ -81,8 +95,9 @@ function startwatch() {
 
 exports.browsersync = browsersync;
 exports.scripts = scripts;
+exports.typescript = typescript;
 exports.styles = styles;
 exports.images = images;
 exports.cleanimg = cleanimg;
-exports.build = series(cleandist, styles, scripts, images, buildcopy);
-exports.default = parallel(styles, scripts, browsersync, startwatch);
+exports.build = series(cleandist, styles, scripts, typescript, images, buildcopy);
+exports.default = parallel(styles, scripts, typescript, browsersync, startwatch);
